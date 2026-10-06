@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .contenedor {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 12px 12px 96px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.35rem;
+    }
+
+    .subtitulo {
+      margin: 0;
+      color: #6b7280;
+    }
+
+    label.etiqueta {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    select, button {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+    }
+
+    select {
+      border: 1px solid #d1d5db;
+      padding: 10px;
+      background: white;
+      color: inherit;
+    }
+
+    button {
+      border: 0;
+      padding: 12px 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .btn-secundario {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .btn-principal {
+      background: #111827;
+      color: white;
+    }
+
+    .acciones {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .resumen {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-top: 12px;
+      font-weight: 700;
+    }
+
+    .estado {
+      font-size: .8rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #e5e7eb;
+    }
+
+    .estado.REGISTRADA {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .participante {
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+    }
+
+    .participante.PRESENTE {
+      border-color: #16a34a;
+      background: #f0fdf4;
+    }
+
+    .participante.AUSENTE {
+      border-color: #fca5a5;
+      background: #fef2f2;
+    }
+
+    .participante.JUSTIFICANTE_PENDIENTE {
+      border-color: #f59e0b;
+      background: #fffbeb;
+    }
+
+    .nombre {
+      font-weight: 700;
+    }
+
+    .correo {
+      color: #6b7280;
+      font-size: .9rem;
+      overflow-wrap: anywhere;
+    }
+
+    .opciones {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.4fr;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .opcion {
+      min-height: 44px;
+      padding: 8px 4px;
+      font-size: .85rem;
+      background: white;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+
+    .opcion[aria-pressed="true"].PRESENTE {
+      background: #16a34a;
+      border-color: #16a34a;
+      color: white;
+    }
+
+    .opcion[aria-pressed="true"].AUSENTE {
+      background: #dc2626;
+      border-color: #dc2626;
+      color: white;
+    }
+
+    .opcion[aria-pressed="true"].JUSTIFICANTE_PENDIENTE {
+      background: #f59e0b;
+      border-color: #f59e0b;
+      color: #111827;
+    }
+
+    .detalle {
+      margin-top: 4px;
+      font-size: .9rem;
+      color: #4b5563;
+    }
+
+    .barra-guardar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(243,244,246,.95);
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .barra-guardar button {
+      display: block;
+      max-width: 736px;
+      margin: 0 auto;
+    }
+
+    .mensaje {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .ok {
+      display: block;
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .error {
+      display: block;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .cargando {
+      display: none;
+      text-align: center;
+      padding: 12px;
+      color: #4b5563;
+    }
+
+    .vacio {
+      color: #6b7280;
+      text-align: center;
+      padding: 12px;
+    }
+  </style>
+</head>
+<body>
+  <main class="contenedor">
+    <section class="panel">
+      <h1>Control de asistencia</h1>
+      <p class="subtitulo">30 participantes · 10 sesiones</p>
+    </section>
+
+    <section class="panel">
+      <label class="etiqueta" for="sesion">Sesión</label>
+      <select id="sesion">
+        <option value="">Selecciona una sesión</option>
+      </select>
+
+      <div class="acciones">
+        <button id="marcar" class="btn-secundario" onclick="marcarTodos('PRESENTE')" disabled>
+          Marcar todos
+        </button>
+        <button id="desmarcar" class="btn-secundario" onclick="marcarTodos('AUSENTE')" disabled>
+          Todos ausentes
+        </button>
+      </div>
+
+      <div class="resumen">
+        <span id="contador">Presentes: 0 / 0</span>
+        <span id="estadoSesion"></span>
+      </div>
+      <div id="detalle" class="detalle">Ausentes: 0 · Justificante pendiente: 0</div>
+
+      <div id="mensaje" class="mensaje" role="status"></div>
+    </section>
+
+    <section class="panel">
+      <div id="cargando" class="cargando">Cargando...</div>
+      <div id="lista"><p class="vacio">Selecciona una sesión para ver la lista.</p></div>
+    </section>
+  </main>
+
+  <div class="barra-guardar">
+    <button id="guardar" class="btn-principal" onclick="guardar()" disabled>
+      Guardar asistencia
+    </button>
+  </div>
+
+  <script>
+    let participantes = [];
+    let sesiones = [];
+
+    const ESTADOS = [
+      { valor: 'PRESENTE', texto: 'Presente' },
+      { valor: 'AUSENTE', texto: 'Ausente' },
+      { valor: 'JUSTIFICANTE_PENDIENTE', texto: 'Justificante pendiente' }
+    ];
+
+    document.addEventListener('DOMContentLoaded', cargarSesiones);
+    document.getElementById('sesion').addEventListener('change', cargarParticipantes);
+
+    function cargarSesiones() {
+      // google.script.run solo existe cuando la página la sirve Apps Script (URL /dev o /exec).
+      if (typeof google === 'undefined' || !google.script) {
+        mostrarMensaje(
+          'Abre la aplicación desde la URL de la implementación de Apps Script ' +
+          '(/dev o /exec), no desde el archivo local.',
+          false
+        );
+        return;
+      }
+
+      mostrarCarga(true);
+
+      google.script.run
+        .withSuccessHandler(datos => {
+          sesiones = datos || [];
+          const select = document.getElementById('sesion');
+
+          sesiones.forEach(s => {
+            const option = document.createElement('option');
+            option.value = s.id;
+            option.textContent =
+              `Sesión ${s.numero} - ${s.fecha || 'sin fecha'} - ${s.tema}`;
+            select.appendChild(option);
+          });
+
+          mostrarCarga(false);
+        })
+        .withFailureHandler(mostrarError)
+        .obtenerSesiones();
+    }
+
+    function cargarParticipantes() {
+      const idSesion = document.getElementById('sesion').value;
+      document.getElementById('lista').innerHTML = '';
+      ocultarMensaje();
+      habilitarControles(false);
+
+      if (!idSesion) {
+        participantes = [];
+        actualizarContador();
+        mostrarEstadoSesion('');
+        return;
+      }
+
+      const sesion = sesiones.find(s => s.id === idSesion);
+      mostrarEstadoSesion(sesion ? sesion.estado : '');
+
+      mostrarCarga(true);
+
+      google.script.run
+        .withSuccessHandler(datos => {
+          // Ignora respuestas tardías si el usuario ya cambió de sesión.
+          if (document.getElementById('sesion').value !== idSesion) return;
+
+          participantes = datos || [];
+          renderParticipantes();
+          mostrarCarga(false);
+          habilitarControles(participantes.length > 0);
+        })
+        .withFailureHandler(mostrarError)
+        .obtenerParticipantes(idSesion);
+    }
+
+    function renderParticipantes() {
+      const lista = document.getElementById('lista');
+      lista.innerHTML = '';
+
+      if (participantes.length === 0) {
+        lista.innerHTML = '<p class="vacio">No hay participantes activos.</p>';
+      }
+
+      participantes.forEach((p, indice) => {
+        const fila = document.createElement('div');
+        fila.className = `participante ${p.estado}`;
+
+        const datos = document.createElement('div');
+        datos.innerHTML = `
+          <div class="nombre">${escapar(p.id)} · ${escapar(p.nombre)}</div>
+          <div class="correo">${escapar(p.correo)}</div>
+        `;
+
+        const opciones = document.createElement('div');
+        opciones.className = 'opciones';
+        opciones.setAttribute('role', 'group');
+        opciones.setAttribute('aria-label', `Asistencia de ${p.nombre}`);
+
+        ESTADOS.forEach(e => {
+          const boton = document.createElement('button');
+          boton.type = 'button';
+          boton.className = `opcion ${e.valor}`;
+          boton.textContent = e.texto;
+          boton.setAttribute('aria-pressed', String(p.estado === e.valor));
+          boton.addEventListener('click', () => {
+            participantes[indice].estado = e.valor;
+            fila.className = `participante ${e.valor}`;
+            opciones.querySelectorAll('.opcion').forEach(b => {
+              b.setAttribute('aria-pressed', String(b === boton));
+            });
+            actualizarContador();
+          });
+          opciones.appendChild(boton);
+        });
+
+        fila.appendChild(datos);
+        fila.appendChild(opciones);
+        lista.appendChild(fila);
+      });
+
+      actualizarContador();
+    }
+
+    function marcarTodos(valor) {
+      participantes = participantes.map(p => ({
+        ...p,
+        estado: valor
+      }));
+      renderParticipantes();
+    }
+
+    function actualizarContador() {
+      const contar = estado => participantes.filter(p => p.estado === estado).length;
+      document.getElementById('contador').textContent =
+        `Presentes: ${contar('PRESENTE')} / ${participantes.length}`;
+      document.getElementById('detalle').textContent =
+        `Ausentes: ${contar('AUSENTE')} · ` +
+        `Justificante pendiente: ${contar('JUSTIFICANTE_PENDIENTE')}`;
+    }
+
+    function guardar() {
+      const idSesion = document.getElementById('sesion').value;
+
+      if (!idSesion) {
+        mostrarMensaje('Selecciona una sesión.', false);
+        return;
+      }
+
+      habilitarControles(false);
+      document.getElementById('guardar').textContent = 'Guardando...';
+      mostrarCarga(true);
+
+      const datos = participantes.map(p => ({ id: p.id, estado: p.estado }));
+
+      google.script.run
+        .withSuccessHandler(resultado => {
+          mostrarCarga(false);
+          habilitarControles(true);
+          document.getElementById('guardar').textContent = 'Guardar asistencia';
+
+          mostrarMensaje(
+            `Guardado: ${resultado.presentes} presentes, ` +
+            `${resultado.ausentes} ausentes y ` +
+            `${resultado.justificantes} con justificante pendiente.`,
+            true
+          );
+
+          const sesion = sesiones.find(s => s.id === idSesion);
+          if (sesion) sesion.estado = 'REGISTRADA';
+          mostrarEstadoSesion('REGISTRADA');
+        })
+        .withFailureHandler(error => {
+          habilitarControles(true);
+          document.getElementById('guardar').textContent = 'Guardar asistencia';
+          mostrarError(error);
+        })
+        .guardarAsistencia(idSesion, datos);
+    }
+
+    function habilitarControles(habilitado) {
+      ['guardar', 'marcar', 'desmarcar'].forEach(id => {
+        document.getElementById(id).disabled = !habilitado;
+      });
+    }
+
+    function mostrarEstadoSesion(estado) {
+      const el = document.getElementById('estadoSesion');
+      el.textContent = estado;
+      el.className = estado ? `estado ${estado}` : '';
+    }
+
+    function mostrarCarga(visible) {
+      document.getElementById('cargando').style.display =
+        visible ? 'block' : 'none';
+    }
+
+    function mostrarError(error) {
+      mostrarCarga(false);
+      const texto = error && error.message
+        ? error.message
+        : String(error);
+      mostrarMensaje(texto, false);
+    }
+
+    function mostrarMensaje(texto, correcto) {
+      const mensaje = document.getElementById('mensaje');
+      mensaje.textContent = texto;
+      mensaje.className = `mensaje ${correcto ? 'ok' : 'error'}`;
+    }
+
+    function ocultarMensaje() {
+      document.getElementById('mensaje').className = 'mensaje';
+    }
+
+    function escapar(texto) {
+      return String(texto ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+  </script>
+</body>
+</html>
